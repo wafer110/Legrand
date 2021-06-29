@@ -1,0 +1,76 @@
+---
+title: "Discontinue Product Report"
+author: "Wafer Hsu"
+date: "6/28/2021"
+output:
+  html_document:
+    df_print: paged
+subtitle: LOP72 and LOP75
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo       = FALSE,
+                      fig.height = 4.8, 
+                      fig.width  = 7.8,
+                      fig.align  = "center")
+library(tidyverse)
+library(readxl)       # read excel file
+library(writexl)      # export excel file
+```
+  
+## Import Data   
+    
+- A brief looking at the original `LOP72 and LOP75.xlsx` file.  
+```{r}
+# /Import data & Remove total yearly/quantity/
+lop7275 <- read_excel("./data/LOP72 and LOP75.xlsx") %>%
+           slice(-1141:-1142)
+# View original data
+lop7275
+```
+
+## Transform Data    
+  
+- Reform the data to be the format that we can manipulate it in Programming R. 
+```{r}
+# /Individually take out SKUs, Quantity Invoiced, and Invoice Amount/
+#    Part Number - 1
+X1 <- lop7275 %>%
+  slice(which(row_number() %% 3 == 1)) %>%
+  select(1)
+#    Quantity Invoiced - 2
+X2 <- lop7275 %>%
+  slice(which(row_number() %% 3 == 2)) %>%  
+  select(3:8) %>%  ## select 2015-2020
+  set_names(c("2015 Qty", "2016 Qty", "2017 Qty", 
+              "2018 Qty", "2019 Qty", "2020 Qty"))
+#    Invoice Amount - 0
+X3 <- lop7275 %>%
+  slice(which(row_number() %% 3 == 0)) %>%
+  select(3:8) %>% ## select 2015-2020 
+  set_names(c("2015 Amount", "2016 Amount", "2017 Amount", 
+              "2018 Amount", "2019 Amount", "2020 Amount"))
+#    Columnbind all 3 datasets
+lop7275 <- cbind(X1, X2, X3)
+  
+# /Replace all NAs with 0/
+lop7275[is.na(lop7275)] <- 0
+
+# /Accumulate Qty and Amount by Part Number/
+#    Save as a new LOP72/75 dataset
+lop7275 %>%
+  mutate(`2015-2020 Qty` = `2015 Qty`+`2016 Qty`+`2017 Qty`+
+                           `2018 Qty`+`2019 Qty`+`2020 Qty`) %>%
+  mutate(`2015-2020 Amount` = `2015 Amount`+`2016 Amount`+`2017 Amount`+
+                              `2018 Amount`+`2019 Amount`+`2020 Amount`) %>%
+  select(`Part Number`, `2015-2020 Qty`, `2015-2020 Amount`, everything()) -> lop7275_new
+# View transformed data
+lop7275_new
+```
+
+## Data Exploration
+
+
+
+
+
